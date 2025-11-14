@@ -1,0 +1,13 @@
+/* styles3.css - Styles for reference table and plain text/endnotes */
+.ref-toolbar{margin-bottom:10px}
+.ref-toolbar button{margin-right:8px;padding:6px 10px;border-radius:4px;border:1px solid #bbb;background:#fff;cursor:pointer}
+.ref-table{width:100%;border-collapse:collapse;font-family:Arial,Helvetica,sans-serif}
+.ref-table th,.ref-table td{border:1px solid #ddd;padding:8px;text-align:left}
+.ref-table thead{background:#f4f4f4}
+.ref-link{color:#0a58ca;text-decoration:underline;cursor:pointer}
+.ref-detail{background:#fcfcfc}
+.ref-detail-inner{padding:8px;color:#222}
+.ref-plaintext p{margin:6px 0;padding:4px 0;border-bottom:1px dashed #eee}
+.ref-endnotes{margin-top:14px;padding-top:8px;border-top:2px solid #f0f0f0}
+.ref-endnotes h4{margin:0 0 8px 0}
+.ref-error{color:#a00;padding:12px;background:#fff0f0;border:1px solid #f5c1c1}

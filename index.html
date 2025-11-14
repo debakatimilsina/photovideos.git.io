@@ -6,10 +6,13 @@
     <title>Photo & Videos</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="styles2.css">
+    <link rel="stylesheet" href="styles3.css">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
 </head>
 <body>
     <div id="root"></div>
+    <!-- Trainee reference renderer container -->
+    <div id="trainee-container" style="margin:18px 0;"></div>
     <!-- Image Modal for full screen images -->
     <div id="image-modal" class="image-modal" style="display:none;">
         <span class="image-modal-close" id="image-modal-close">&times;</span>
@@ -20,6 +23,9 @@
 
         <script src="passkey.js"></script>
         <script src="data1Trainees.js"></script>
+        <script src="data1Trainees2.js"></script>
+        <script src="data1Trainees3.js"></script>
+        <script src="ref.js"></script>
         <script src="data2Images.js"></script>
     <script src="data2bImages.js"></script>
         <script src="data3Links.js"></script>
@@ -70,6 +76,14 @@
     <script src="searchU.js"></script>
     <script src="appNoteU.js"></script>
         <script src="index.js"></script>
+    <script>
+        // initialize trainee references viewer (safe-guarded)
+        try{
+            if(typeof initTraineeReferences === 'function'){
+                initTraineeReferences('trainee-container');
+            }
+        }catch(e){ console.warn('initTraineeReferences failed', e); }
+    </script>
 </body>
 </html>
 
