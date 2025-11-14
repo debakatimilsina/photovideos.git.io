@@ -15,8 +15,24 @@
         return {headers:headers, rows:rows};
     }
 
+    // Function to dynamically generate SN column and fix any manual alterations
+    function adjustSN(data){
+        var parsed = parseCSV(data);
+        if(!parsed.headers.includes("SN")) return data; // No SN column to adjust
+
+        // Ensure SN is the first column and auto-adjust to natural number increments
+        var headers = ["SN"].concat(parsed.headers.filter(h => h !== "SN"));
+        var updatedRows = parsed.rows.map(function(row, index){
+            row.SN = (index + 1).toString(); // Auto-generate SN based on row order
+            return headers.map(function(header){ return row[header] || ""; }).join(",");
+        });
+
+        return [headers.join(",")].concat(updatedRows).join("\n");
+    }
+
     // Build table into container element
     function buildTable(container, mainDataText, refDataText){
+        refDataText = adjustSN(refDataText); // Adjust SN dynamically before building the table
         container.innerHTML = '';
         var parsedMain = parseCSV(mainDataText);
         var parsedRef = parseCSV(refDataText);
