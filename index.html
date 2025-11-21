@@ -19,7 +19,10 @@
     <div id="trainee-container" style="margin:18px 0;"></div>
     <!-- Gallery search + container -->
     <div class="gallery-search-wrap">
-        <input id="gallery-search" class="gallery-search" type="search" placeholder="Search images by title or description…" aria-label="Search gallery">
+        <div class="gallery-suggestions">
+            <input id="gallery-search" class="gallery-search" type="search" placeholder="Search images by title or description…" aria-label="Search gallery" autocomplete="off">
+            <div id="gallery-suggestions-list" class="gallery-suggestions-list" style="display:none;"></div>
+        </div>
         <button id="gallery-clear" class="gallery-clear" title="Clear search">Clear</button>
     </div>
     <div id="gallery-container"></div>

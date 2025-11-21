@@ -58,3 +58,36 @@
 
 .gallery-search-wrap { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
+/* Autocomplete suggestions */
+.gallery-suggestions {
+  position: relative;
+  max-width: 520px;
+}
+.gallery-suggestions-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  max-height: 220px;
+  overflow: auto;
+  z-index: 1000;
+}
+.gallery-suggestions-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.gallery-suggestions-list button:hover { background:#f5f5f5; }
+
+/* Load more button */
+.gallery-loadmore-wrap { text-align:center; padding:12px; }
+.gallery-loadmore { padding:10px 14px; border-radius:6px; border:1px solid #ddd; background:#fafafa; cursor:pointer; }
+.gallery-loadmore:hover { background:#f0f0f0; }
+
+
