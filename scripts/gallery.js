@@ -1,5 +1,5 @@
 // scripts/gallery.js
-// Build a simple gallery from the CSV string `data2bImages`.
+// Virtualized gallery from the CSV string `data2bImages`.
 (function(){
   function parseCSV(s){
     if(!s) return [];
@@ -7,7 +7,6 @@
     if(lines.length<=1) return [];
     lines.shift(); // drop header
     return lines.map(function(line){
-      // split into up to 4 fields: ID,Title,Description,Image (image may contain commas)
       var parts = line.split(',');
       var id = (parts[0]||'').trim();
       var title = (parts[1]||'').trim();
@@ -19,8 +18,10 @@
 
   var allData = [];
   var currentQuery = '';
-  var pageSize = 12; // items per page
+  var pageSize = 12;
   var currentOffset = 0;
+  var itemHeight = 200; // estimated item height in px
+  var bufferRows = 3;
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]; });
@@ -34,60 +35,104 @@
     }catch(e){ return escapeHtml(text); }
   }
 
-  function renderGallery(data, query, offset, limit){
+  // Virtualized render: compute visible window based on scroll, render only visible items
+  function renderGallery(data, query){
     var container = document.getElementById('gallery-container');
     if(!container) return;
     container.innerHTML = '';
-    var grid = document.createElement('div');
-    grid.className = 'gallery-grid';
 
-    var slice = data.slice(offset, offset + limit);
-    slice.forEach(function(item){
-      var itemWrap = document.createElement('div');
-      itemWrap.className = 'gallery-item';
+    // viewport wrapper
+    var viewport = document.createElement('div');
+    viewport.className = 'gallery-viewport';
+    viewport.style.position = 'relative';
+    viewport.style.width = '100%';
+    viewport.style.height = Math.max(300, window.innerHeight - 200) + 'px';
+    viewport.style.overflow = 'auto';
 
-      var img = document.createElement('img');
-      img.src = item.Image || '';
-      img.alt = item.Title || item.ID || '';
-      img.className = 'expandable-img';
-      img.setAttribute('data-fullsrc', item.Image || '');
-      img.loading = 'lazy';
+    // compute columns based on container width and min item width (approx)
+    var minItemWidth = 160; // px
+    var gap = 10; // matches CSS
+    var cols = Math.max(1, Math.floor((container.clientWidth + gap) / (minItemWidth + gap)));
+    var totalRows = Math.ceil(data.length / cols);
+    var totalHeight = totalRows * itemHeight;
 
-      var caption = document.createElement('div');
-      caption.className = 'gallery-caption';
-      var title = document.createElement('span');
-      title.className = 'title';
-      var desc = document.createElement('span');
-      desc.className = 'desc';
+    // spacer to provide scroll height
+    var spacer = document.createElement('div');
+    spacer.style.height = totalHeight + 'px';
+    spacer.style.position = 'relative';
 
-      // Use HTML to allow <mark> highlighting
-      title.innerHTML = highlight(item.Title || item.ID || '', query);
-      desc.innerHTML = highlight(item.Description || '', query);
+    viewport.appendChild(spacer);
+    container.appendChild(viewport);
 
-      caption.appendChild(title);
-      if((item.Description||'').trim()) caption.appendChild(desc);
+    var rendered = document.createElement('div');
+    rendered.className = 'gallery-rendered';
+    rendered.style.position = 'absolute';
+    rendered.style.left = '0';
+    rendered.style.top = '0';
+    rendered.style.width = '100%';
+    spacer.appendChild(rendered);
 
-      itemWrap.appendChild(img);
-      itemWrap.appendChild(caption);
-      grid.appendChild(itemWrap);
-    });
+    function paint(){
+      var scrollTop = viewport.scrollTop;
+      var vh = viewport.clientHeight;
+      var firstVisibleRow = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferRows);
+      var lastVisibleRow = Math.min(totalRows -1, Math.ceil((scrollTop + vh) / itemHeight) + bufferRows);
+      var startIndex = firstVisibleRow * cols;
+      var endIndex = Math.min(data.length, (lastVisibleRow+1) * cols);
 
-    container.appendChild(grid);
+      rendered.innerHTML = '';
+      for(var i=startIndex;i<endIndex;i++){
+        var item = data[i];
+        if(!item) continue;
+        var row = Math.floor(i/cols);
+        var col = i % cols;
 
-    // Load more wrapper
-    var wrap = document.createElement('div');
-    wrap.className = 'gallery-loadmore-wrap';
-    if(offset + limit < data.length){
-      var btn = document.createElement('button');
-      btn.className = 'gallery-loadmore';
-      btn.textContent = 'Load more';
-      btn.addEventListener('click', function(){
-        currentOffset = currentOffset + pageSize;
-        renderGallery(data, query, currentOffset, pageSize);
-      });
-      wrap.appendChild(btn);
+        var itemWrap = document.createElement('div');
+        itemWrap.className = 'gallery-item';
+        itemWrap.style.position = 'absolute';
+        itemWrap.style.boxSizing = 'border-box';
+        var percentLeft = (100/cols) * col;
+        itemWrap.style.left = percentLeft + '%';
+        itemWrap.style.width = (100/cols) + '%';
+        itemWrap.style.top = (row * itemHeight) + 'px';
+        itemWrap.style.padding = '6px';
+
+        var img = document.createElement('img');
+        img.src = item.Image || '';
+        img.alt = item.Title || item.ID || '';
+        img.className = 'expandable-img';
+        img.setAttribute('data-fullsrc', item.Image || '');
+        img.loading = 'lazy';
+        img.style.width = '100%';
+        img.style.height = (itemHeight - 60) + 'px';
+        img.style.objectFit = 'cover';
+
+        var caption = document.createElement('div');
+        caption.className = 'gallery-caption';
+        caption.style.padding = '6px 4px';
+        var title = document.createElement('span');
+        title.className = 'title';
+        var desc = document.createElement('span');
+        desc.className = 'desc';
+        title.innerHTML = highlight(item.Title || item.ID || '', query);
+        desc.innerHTML = highlight(item.Description || '', query);
+        caption.appendChild(title);
+        if((item.Description||'').trim()) caption.appendChild(desc);
+
+        itemWrap.appendChild(img);
+        itemWrap.appendChild(caption);
+        rendered.appendChild(itemWrap);
+      }
     }
-    container.appendChild(wrap);
+
+    // initial paint
+    paint();
+    var raf;
+    viewport.addEventListener('scroll', function(){
+      if(raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(paint);
+    });
+    window.addEventListener('resize', debounce(function(){ renderGallery(data, query); }, 200));
   }
 
   function debounce(fn, wait){
@@ -144,14 +189,14 @@
     var onInput = debounce(function(){
       var q = (input.value || '').trim();
       currentQuery = q;
-      if(!q){ currentOffset=0; renderGallery(allData,'',currentOffset,pageSize); showSuggestions([]); return; }
+      if(!q){ currentOffset=0; renderGallery(allData,''); showSuggestions([]); return; }
       var ql = q.toLowerCase();
       var filtered = allData.filter(function(it){
         var hay = ((it.Title||'') + ' ' + (it.Description||'')).toLowerCase();
         return hay.indexOf(ql) !== -1;
       });
       currentOffset = 0;
-      renderGallery(filtered, q, currentOffset, pageSize);
+      renderGallery(filtered, q);
 
       // show suggestions matching start of words
       var sugg = suggestionsIndex.filter(function(s){ return s.toLowerCase().indexOf(ql) !== -1; }).slice(0,10);
@@ -162,14 +207,14 @@
     document.addEventListener('click', function(e){ if(!e.target.closest('.gallery-suggestions')){ suggestionsBox.style.display='none'; } });
 
     if(clearBtn){
-      clearBtn.addEventListener('click', function(){ input.value = ''; currentQuery=''; currentOffset=0; renderGallery(allData,'',0,pageSize); input.focus(); showSuggestions([]); });
+      clearBtn.addEventListener('click', function(){ input.value = ''; currentQuery=''; currentOffset=0; renderGallery(allData,''); input.focus(); showSuggestions([]); });
     }
   }
 
   document.addEventListener('DOMContentLoaded', function(){
     try{
       allData = parseCSV(window.data2bImages);
-      renderGallery(allData);
+      renderGallery(allData,'');
       setupSearch();
     }catch(e){
       console.warn('gallery build failed', e);
