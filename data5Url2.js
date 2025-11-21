@@ -23,7 +23,7 @@ var data5Url2 = `sno,subject,description,shorturl,longurl
 // Dataset metadata
 var data5Url2Info = {
     name: "DSLR-Images",
-    description: "Data elements with short and long url",
+    description: "Kirtipur Images",
     emoji: "🔗",
     columns: 5,
     primaryKey: "subject",
