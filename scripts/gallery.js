@@ -5,21 +5,24 @@
     if(!s) return [];
     var lines = s.trim().split(/\r?\n/);
     if(lines.length<=1) return [];
-    var header = lines.shift().split(',');
+    lines.shift(); // drop header
     return lines.map(function(line){
+      // split into up to 4 fields: ID,Title,Description,Image (image may contain commas)
       var parts = line.split(',');
-      return {
-        ID: parts[0] ? parts[0].trim() : '',
-        Title: parts[1] ? parts[1].trim() : '',
-        Description: parts[2] ? parts[2].trim() : '',
-        Image: parts[3] ? parts[3].trim() : ''
-      };
+      var id = (parts[0]||'').trim();
+      var title = (parts[1]||'').trim();
+      var desc = (parts[2]||'').trim();
+      var image = parts.slice(3).join(',').trim();
+      return { ID: id, Title: title, Description: desc, Image: image };
     });
   }
 
-  function buildGallery(data){
+  var allData = [];
+
+  function renderGallery(data){
     var container = document.getElementById('gallery-container');
     if(!container) return;
+    container.innerHTML = '';
     var grid = document.createElement('div');
     grid.className = 'gallery-grid';
 
@@ -31,7 +34,6 @@
       img.src = item.Image || '';
       img.alt = item.Title || item.ID || '';
       img.className = 'expandable-img';
-      // allow modal to use full src (same here)
       img.setAttribute('data-fullsrc', item.Image || '');
 
       var caption = document.createElement('div');
@@ -54,10 +56,35 @@
     container.appendChild(grid);
   }
 
+  function debounce(fn, wait){
+    var t = null;
+    return function(){
+      var args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function(){ fn.apply(null, args); }, wait);
+    };
+  }
+
+  function setupSearch(){
+    var input = document.getElementById('gallery-search');
+    if(!input) return;
+    var onInput = debounce(function(){
+      var q = (input.value || '').trim().toLowerCase();
+      if(!q){ renderGallery(allData); return; }
+      var filtered = allData.filter(function(it){
+        var hay = ((it.Title||'') + ' ' + (it.Description||'')).toLowerCase();
+        return hay.indexOf(q) !== -1;
+      });
+      renderGallery(filtered);
+    }, 200);
+    input.addEventListener('input', onInput);
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
     try{
-      var data = parseCSV(window.data2bImages);
-      buildGallery(data);
+      allData = parseCSV(window.data2bImages);
+      renderGallery(allData);
+      setupSearch();
     }catch(e){
       console.warn('gallery build failed', e);
     }

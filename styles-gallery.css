@@ -31,3 +31,16 @@
 @media (min-width: 900px) {
   .gallery-item img { height: 120px; }
 }
+
+/* Search box */
+.gallery-search-wrap { padding: 12px; }
+.gallery-search {
+  width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
