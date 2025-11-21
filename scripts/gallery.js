@@ -22,6 +22,7 @@
   var currentOffset = 0;
   var itemHeight = 200; // estimated item height in px
   var bufferRows = 3;
+  var thumbnailsVisible = false; // default: thumbnails hidden on page load
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]; });
@@ -189,16 +190,22 @@
     var onInput = debounce(function(){
       var q = (input.value || '').trim();
       currentQuery = q;
-      if(!q){ currentOffset=0; renderGallery(allData,''); showSuggestions([]); return; }
+      // compute filtered results regardless of visibility
+      if(!q){
+        currentOffset=0;
+        if(thumbnailsVisible) renderGallery(allData,'');
+        showSuggestions([]);
+        return;
+      }
       var ql = q.toLowerCase();
       var filtered = allData.filter(function(it){
         var hay = ((it.Title||'') + ' ' + (it.Description||'')).toLowerCase();
         return hay.indexOf(ql) !== -1;
       });
       currentOffset = 0;
-      renderGallery(filtered, q);
+      if(thumbnailsVisible) renderGallery(filtered, q);
 
-      // show suggestions matching start of words
+      // show suggestions matching the query
       var sugg = suggestionsIndex.filter(function(s){ return s.toLowerCase().indexOf(ql) !== -1; }).slice(0,10);
       showSuggestions(sugg);
     }, 150);
@@ -207,14 +214,41 @@
     document.addEventListener('click', function(e){ if(!e.target.closest('.gallery-suggestions')){ suggestionsBox.style.display='none'; } });
 
     if(clearBtn){
-      clearBtn.addEventListener('click', function(){ input.value = ''; currentQuery=''; currentOffset=0; renderGallery(allData,''); input.focus(); showSuggestions([]); });
+      // toggle thumbnails visibility when button clicked
+      clearBtn.addEventListener('click', function(){
+        thumbnailsVisible = !thumbnailsVisible;
+        clearBtn.setAttribute('aria-pressed', thumbnailsVisible ? 'true' : 'false');
+        clearBtn.textContent = thumbnailsVisible ? 'Hide thumbnails' : 'Show thumbnails';
+        var container = document.getElementById('gallery-container');
+        if(!thumbnailsVisible){
+          // hide thumbnails: clear gallery container
+          container.innerHTML = '';
+        }else{
+          // show thumbnails: render with current query (if any)
+          if((currentQuery||'').trim()){
+            var ql = currentQuery.toLowerCase();
+            var filtered = allData.filter(function(it){
+              var hay = ((it.Title||'') + ' ' + (it.Description||'')).toLowerCase();
+              return hay.indexOf(ql) !== -1;
+            });
+            renderGallery(filtered, currentQuery);
+          }else{
+            renderGallery(allData, '');
+          }
+        }
+      });
     }
   }
 
   document.addEventListener('DOMContentLoaded', function(){
     try{
       allData = parseCSV(window.data2bImages);
-      renderGallery(allData,'');
+      // Do NOT render thumbnails by default (thumbnailsVisible=false).
+      // Show nothing until user toggles using the button.
+      var container = document.getElementById('gallery-container');
+      if(container){
+        container.innerHTML = '<div style="padding:12px;color:#666;">Thumbnails are hidden. Click "Show thumbnails" to display.</div>';
+      }
       setupSearch();
     }catch(e){
       console.warn('gallery build failed', e);
