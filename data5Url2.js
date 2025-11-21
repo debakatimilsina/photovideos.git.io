@@ -1,5 +1,5 @@
 var data5Url2 = `sno,subject,description,shorturl,longurl
-02b,git-Link,HTML,index.html,https://github.com/ShivaPrasadAcharya/akaladevi.git.io/edit/main/index.html
+01, DSLR Photo-Kirtipur, Shiva & Debaka, open image, Images/DSC_0240.NEF
 
 `;
 
